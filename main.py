@@ -1,5 +1,5 @@
 import abc
-
+from queue import Queue
 
 class Manager:
     """
@@ -9,11 +9,11 @@ class Manager:
 
     def __init__(self, initial_url):
 
-        self.urls = set()  # urls to be consumed
+        self.urls = Queue()  # urls to be consumed
         self.succeeded_urls = set() # urls that have been fetched successfully
         self.failed_urls = set()  # 抓取失败的urls
 
-        self.urls.add(initial_url)  # initiate
+        self.urls.put(initial_url)  # initiate
         self.set_url_methods = []
 
 
@@ -26,7 +26,7 @@ class Manager:
         self.set_url_methods = set_url_methods
         urls = self.urls
         while urls:
-            url = urls.pop()
+            url = urls.get()
             crawlers = [set_url(url) for set_url in set_url_methods]
             crawlers = [crawler for crawler in crawlers if crawler]
             for crawler in crawlers:
@@ -48,6 +48,7 @@ class abcCrawler(abc.ABC):
     """
     def __init__(self, url):
         self.url = url
+
 
     @classmethod
     @abc.abstractmethod
