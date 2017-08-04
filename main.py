@@ -18,7 +18,7 @@ class Manager:
         self.urls.put(initial_url)  # initiate
         self.set_url_methods = []
         self.loop = asyncio.get_event_loop()
-        self.session = aiohttp.ClientSession()
+
 
 
     def run(self):
@@ -33,7 +33,7 @@ class Manager:
         while urls:
             url = urls.get()
             crawlers = [set_url(url) for set_url in set_url_methods]
-            crawlers = [crawler for crawler in crawlers if crawler]
+            crawlers = [crawler.main() for crawler in crawlers if crawler]
             crawlers_co = asyncio.wait(crawlers)
             loop.run_until_complete(crawlers_co)
         loop.close()
@@ -44,7 +44,6 @@ class Manager:
     def set_manager(self, crawler_class):
         self.crawler_classes.append(crawler_class)
         crawler_class.manager = self
-        crawler_class.session = self.session
         return crawler_class
 
 
