@@ -1,5 +1,7 @@
 import abc
 from queue import Queue
+import asyncio
+import aiohttp
 
 class Manager:
     """
@@ -15,6 +17,8 @@ class Manager:
 
         self.urls.put(initial_url)  # initiate
         self.set_url_methods = []
+        self.loop = asyncio.get_event_loop()
+        self.session = aiohttp.ClientSession()
 
 
     def run(self):
@@ -22,6 +26,7 @@ class Manager:
 
         :return:
         """
+        loop = self.loop
         set_url_methods = [crawler.set_url for crawler in self.crawler_classes]
         self.set_url_methods = set_url_methods
         urls = self.urls
@@ -29,12 +34,17 @@ class Manager:
             url = urls.get()
             crawlers = [set_url(url) for set_url in set_url_methods]
             crawlers = [crawler for crawler in crawlers if crawler]
-            for crawler in crawlers:
-                crawler.main()
+            crawlers_co = asyncio.wait(crawlers)
+            loop.run_until_complete(crawlers_co)
+        loop.close()
+
+
+
 
     def set_manager(self, crawler_class):
         self.crawler_classes.append(crawler_class)
         crawler_class.manager = self
+        crawler_class.session = self.session
         return crawler_class
 
 
@@ -66,14 +76,14 @@ class abcCrawler(abc.ABC):
         return None
 
     @abc.abstractmethod
-    def fetch(self, url):
+    async def fetch(self, url):
         """
         To fetch the url ,and just return the raw response
         :param url:
         :return: response by fetching the url
         """
     @abc.abstractmethod
-    def parse(self, response):
+    async def parse(self, response):
         """
         Get the response,parse it
         :param response:
@@ -81,14 +91,14 @@ class abcCrawler(abc.ABC):
         """
 
     @abc.abstractmethod
-    def store(self, data):
+    async def store(self, data):
         """
         Store the data to database
         :param data:
         :return: None
         """
 
-    def main(self):
+    async def main(self):
         """
         The crawler's main progress,which is called by manager
         It just calls the crawler's other methods,and don't has other operations
@@ -96,9 +106,9 @@ class abcCrawler(abc.ABC):
         """
         try:
             url = self.url
-            rep = self.fetch(url)
-            data = self.parse(rep)
-            self.store(data)
+            rep = await self.fetch(url)
+            data = await self.parse(rep)
+            await self.store(data)
         except Exception as exp:
             self.manager.failed_urls.add(self.url)
             pass

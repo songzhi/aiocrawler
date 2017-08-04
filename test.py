@@ -1,4 +1,4 @@
-import requests
+import aiohttp
 import bs4
 import aiocrawler.main as main
 
@@ -15,16 +15,17 @@ class Crawler(main.abcCrawler):
             return True
         return False
 
-    def fetch(self, url):
-        response = requests.get(url)
-        return response
+    async def fetch(self, url):
+        session = self.session
+        async with session.get(url) as response:
+            return await response.text()
 
-    def parse(self, response):
-        resp = bs4.BeautifulSoup(response.text, 'lxml')
+    async def parse(self, response):
+        resp = bs4.BeautifulSoup(response, 'lxml')
         title = resp.title.string
         return title
 
-    def store(self, data):
+    async def store(self, data):
         print(data)
         return
 
