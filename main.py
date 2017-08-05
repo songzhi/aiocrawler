@@ -25,7 +25,6 @@ class Manager:
 
         :return:
         """
-        loop = self.loop
         set_url_methods = [crawler.set_url for crawler in self.crawler_classes]
         self.set_url_methods = set_url_methods
         await self.urls.put(self.initial_url)  # initiate
@@ -51,9 +50,7 @@ class Manager:
         crawler_class.manager = self
         return crawler_class
 
-    async def get_session(self):
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            self.session = session
+
 
 
 
