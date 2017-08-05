@@ -1,6 +1,6 @@
 import abc
 import asyncio
-from queue import Queue
+from asyncio import Queue
 import aiohttp
 
 class Manager:
@@ -14,8 +14,9 @@ class Manager:
         self.urls = Queue()  # urls to be consumed
         self.succeeded_urls = set() # urls that have been fetched successfully
         self.failed_urls = set()  # 抓取失败的urls
+        self.initial_url = initial_url
 
-        self.urls.put(initial_url)  # initiate
+
         self.set_url_methods = []
         self.loop = asyncio.get_event_loop()
 
@@ -29,10 +30,11 @@ class Manager:
         loop = self.loop
         set_url_methods = [crawler.set_url for crawler in self.crawler_classes]
         self.set_url_methods = set_url_methods
+        await self.urls.put(self.initial_url)  # initiate
         urls = self.urls
         while not urls.empty():
-            async with aiohttp.ClientSession() as session:
-                url = urls.get()
+            async with aiohttp.ClientSession() as session: #TODO:增加UA伪造，代理IP等反反爬措施
+                url = await urls.get()
                 crawlers = [set_url(url) for set_url in set_url_methods]
                 crawlers = [crawler.main(session) for crawler in crawlers if crawler]
                 crawlers_co = asyncio.wait(crawlers)
