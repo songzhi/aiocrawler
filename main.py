@@ -21,7 +21,7 @@ class Manager:
 
 
 
-    async def run(self):
+    async def manage(self):
         """
 
         :return:
@@ -39,7 +39,10 @@ class Manager:
                 await crawlers_co
 
 
-
+    def run(self):
+        loop = self.loop
+        loop.run_until_complete(self.manage())
+        loop.close()
 
 
 

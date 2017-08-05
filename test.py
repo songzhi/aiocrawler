@@ -30,5 +30,5 @@ class Crawler(main.abcCrawler):
 
 
 if __name__ == '__main__':
-    manager.loop.run_until_complete(manager.run())
+    manager.run()
 
