@@ -1,6 +1,6 @@
 import abc
-from queue import Queue
 import asyncio
+from queue import Queue
 import aiohttp
 
 class Manager:
@@ -30,13 +30,14 @@ class Manager:
         set_url_methods = [crawler.set_url for crawler in self.crawler_classes]
         self.set_url_methods = set_url_methods
         urls = self.urls
-        while urls:
+        while not urls.empty():
             url = urls.get()
             crawlers = [set_url(url) for set_url in set_url_methods]
             crawlers = [crawler.main() for crawler in crawlers if crawler]
             crawlers_co = asyncio.wait(crawlers)
             loop.run_until_complete(crawlers_co)
         loop.close()
+
 
 
 
