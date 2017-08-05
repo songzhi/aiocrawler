@@ -15,8 +15,6 @@ class Manager:
         self.succeeded_urls = set() # urls that have been fetched successfully
         self.failed_urls = set()  # 抓取失败的urls
         self.initial_url = initial_url
-
-
         self.set_url_methods = []
         self.loop = asyncio.get_event_loop()
 
@@ -48,7 +46,7 @@ class Manager:
 
 
 
-    def set_manager(self, crawler_class):
+    def add_crawler(self, crawler_class):
         self.crawler_classes.append(crawler_class)
         crawler_class.manager = self
         return crawler_class

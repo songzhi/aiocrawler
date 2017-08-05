@@ -6,7 +6,7 @@ initial_url = 'http://tieba.baidu.com/p/5235802519'
 
 manager = main.Manager(initial_url)
 
-@manager.set_manager
+@manager.add_crawler
 class Crawler(main.abcCrawler):
 
     @classmethod
