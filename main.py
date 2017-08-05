@@ -21,7 +21,7 @@ class Manager:
 
 
 
-    def run(self):
+    async def run(self):
         """
 
         :return:
@@ -31,12 +31,13 @@ class Manager:
         self.set_url_methods = set_url_methods
         urls = self.urls
         while not urls.empty():
-            url = urls.get()
-            crawlers = [set_url(url) for set_url in set_url_methods]
-            crawlers = [crawler.main() for crawler in crawlers if crawler]
-            crawlers_co = asyncio.wait(crawlers)
-            loop.run_until_complete(crawlers_co)
-        loop.close()
+            async with aiohttp.ClientSession() as session:
+                url = urls.get()
+                crawlers = [set_url(url) for set_url in set_url_methods]
+                crawlers = [crawler.main(session) for crawler in crawlers if crawler]
+                crawlers_co = asyncio.wait(crawlers)
+                await crawlers_co
+
 
 
 
@@ -46,6 +47,10 @@ class Manager:
         self.crawler_classes.append(crawler_class)
         crawler_class.manager = self
         return crawler_class
+
+    async def get_session(self):
+        async with aiohttp.ClientSession(loop=self.loop) as session:
+            self.session = session
 
 
 
@@ -76,7 +81,7 @@ class abcCrawler(abc.ABC):
         return None
 
     @abc.abstractmethod
-    async def fetch(self, url):
+    async def fetch(self, url, session):
         """
         To fetch the url ,and just return the raw response
         :param url:
@@ -98,7 +103,7 @@ class abcCrawler(abc.ABC):
         :return: None
         """
 
-    async def main(self):
+    async def main(self, session):
         """
         The crawler's main progress,which is called by manager
         It just calls the crawler's other methods,and don't has other operations
@@ -106,7 +111,7 @@ class abcCrawler(abc.ABC):
         """
         try:
             url = self.url
-            rep = await self.fetch(url)
+            rep = await self.fetch(url, session)
             data = await self.parse(rep)
             await self.store(data)
         except Exception as exp:

@@ -15,12 +15,9 @@ class Crawler(main.abcCrawler):
             return True
         return False
 
-    async def fetch(self, url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                return await response.text()
-
-
+    async def fetch(self, url, session):
+        async with session.get(url) as response:
+            return await response.text()
 
     async def parse(self, response):
         resp = bs4.BeautifulSoup(response, 'lxml')
@@ -33,5 +30,5 @@ class Crawler(main.abcCrawler):
 
 
 if __name__ == '__main__':
-    manager.run()
+    manager.loop.run_until_complete(manager.run())
 
