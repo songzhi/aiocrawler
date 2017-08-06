@@ -15,8 +15,8 @@ class Manager:
         self.succeeded_urls = set() # urls that have been fetched successfully
         self.failed_urls = set()  # 抓取失败的urls
         self.initial_url = initial_url
-        self.set_url_methods = []
         self.loop = asyncio.get_event_loop()
+
 
 
 
@@ -25,15 +25,12 @@ class Manager:
 
         :return:
         """
-        set_url_methods = [crawler.set_url for crawler in self.crawler_classes]
-        self.set_url_methods = set_url_methods
         await self.urls.put(self.initial_url)  # initiate
         urls = self.urls
         while not urls.empty():
             async with aiohttp.ClientSession() as session: #TODO:增加UA伪造，代理IP等反反爬措施
                 url = await urls.get()
-                crawlers = [set_url(url) for set_url in set_url_methods]
-                crawlers = [crawler.main(session) for crawler in crawlers if crawler]
+                crawlers = self.create_crawlers(url,session)
                 crawlers_co = asyncio.wait(crawlers)
                 await crawlers_co
 
@@ -45,10 +42,23 @@ class Manager:
 
 
 
-    def add_crawler(self, crawler_class):
+    def add_crawler_class(self, crawler_class):
         self.crawler_classes.append(crawler_class)
         crawler_class.manager = self
         return crawler_class
+
+    def create_crawlers(self, url, session):
+        create_crawler_methods = self.create_crawler_methods
+        crawlers = [create_crawler(url) for create_crawler in create_crawler_methods]
+        crawlers = [crawler.main(session) for crawler in crawlers if crawler]
+        return  crawlers
+
+
+    @property
+    def create_crawler_methods(self):
+        create_crawler_methods = [crawler.create_crawler for crawler in self.crawler_classes]
+        self.__dict__.update(create_crawler_methods=create_crawler_methods)
+        return create_crawler_methods
 
 
 
@@ -75,7 +85,7 @@ class abcCrawler(abc.ABC):
         """
 
     @classmethod
-    def set_url(cls, url):
+    def create_crawler(cls, url):
         if cls.isvalid_url(url):
             return cls(url)
         return None
@@ -84,7 +94,7 @@ class abcCrawler(abc.ABC):
     async def fetch(self, url, session):
         """
         To fetch the url ,and just return the raw response
-        :param url:
+        :param url session:
         :return: response by fetching the url
         """
     @abc.abstractmethod
@@ -119,6 +129,17 @@ class abcCrawler(abc.ABC):
             pass
         else:
             self.manager.succeeded_urls.add(self.url)
+
+
+class metaModel(abc.ABCMeta):
+    pass
+
+
+#TODO；增加一个Model类，简化与数据库的操作
+class Model(metaModel):
+    pass
+
+
 
 
 
