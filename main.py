@@ -3,6 +3,7 @@ import asyncio
 from asyncio import Queue
 import aiohttp
 
+
 class Manager:
     """
     crawlers' manager
@@ -12,35 +13,29 @@ class Manager:
     def __init__(self, initial_url):
 
         self.urls = Queue()  # urls to be consumed
-        self.succeeded_urls = set() # urls that have been fetched successfully
-        self.failed_urls = set()  # 抓取失败的urls
+        self.succeeded_urls = set()  # urls that have been fetched successfully
+        self.failed_urls = set()   # 抓取失败的urls
         self.initial_url = initial_url
         self.loop = asyncio.get_event_loop()
-
-
-
 
     async def manage(self):
         """
 
         :return:
         """
-        await self.urls.put(self.initial_url)  # initiate
+        await self.urls.put(self.initial_url)   # initiate
         urls = self.urls
         while not urls.empty():
-            async with aiohttp.ClientSession() as session: #TODO:增加UA伪造，代理IP等反反爬措施
+            async with aiohttp.ClientSession() as session:  # TODO:增加UA伪造，代理IP等反反爬措施
                 url = await urls.get()
-                crawlers = self.create_crawlers(url,session)
+                crawlers = self.create_crawlers(url, session)
                 crawlers_co = asyncio.wait(crawlers)
                 await crawlers_co
-
 
     def run(self):
         loop = self.loop
         loop.run_until_complete(self.manage())
         loop.close()
-
-
 
     def add_crawler_class(self, crawler_class):
         self.crawler_classes.append(crawler_class)
@@ -51,18 +46,13 @@ class Manager:
         create_crawler_methods = self.create_crawler_methods
         crawlers = [create_crawler(url) for create_crawler in create_crawler_methods]
         crawlers = [crawler.main(session) for crawler in crawlers if crawler]
-        return  crawlers
-
+        return crawlers
 
     @property
     def create_crawler_methods(self):
         create_crawler_methods = [crawler.create_crawler for crawler in self.crawler_classes]
         self.__dict__.update(create_crawler_methods=create_crawler_methods)
         return create_crawler_methods
-
-
-
-
 
 
 class abcCrawler(abc.ABC):
@@ -73,7 +63,6 @@ class abcCrawler(abc.ABC):
     """
     def __init__(self, url):
         self.url = url
-
 
     @classmethod
     @abc.abstractmethod
@@ -135,11 +124,13 @@ class metaModel(abc.ABCMeta):
     pass
 
 
-#TODO；增加一个Model类，简化与数据库的操作
+
+# TODO；增加一个Model类，简化与数据库的操作
 class Model(metaModel):
     pass
 
 
-
+class Field:
+    pass
 
 
